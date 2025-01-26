@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -6,38 +6,91 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  Keyboard,
 } from "react-native";
 import api from "./src/services/api";
 
 export default function App() {
   const [cep, setCep] = useState("");
+  const inputRef = useRef(null);
+  const [cepUser, setCepUser] = useState(null);
+
+  async function buscar() {
+    if (cep == "") {
+      alert("Digite um cep valido");
+      setCep("");
+      return;
+    }
+
+    try {
+      const response = await api.get(`/${cep}/json`);
+      console.log(response.data);
+      Keyboard.dismiss();
+      setCepUser(response.data);
+    } catch (error) {
+      console.log("ERROR:" + error);
+    }
+  }
+
+  function limpar() {
+    setCep("");
+    inputRef.current.focus();
+    setCepUser(null);
+  }
   return (
-    <SafeAreaView style={StyleSheet.container}>
+    <SafeAreaView style={styles.container}>
       <View style={{ alignItems: "center" }}>
-        <Text style={styles.text}>Digite seu CEP aqui:</Text>
+        <Text style={styles.text}>Digite seu CEP desejado</Text>
         <TextInput
           style={styles.input}
           placeholder="Ex:74737271"
           value={cep}
           onChangeText={(texto) => setCep(texto)}
           keyboardType="numeric"
+          ref={inputRef}
         />
       </View>
 
       <View style={styles.areaBtn}>
-        <TouchableOpacity style={styles.botao}>
+        <TouchableOpacity style={styles.botao} onPress={buscar}>
           <Text style={styles.botaoText}>Buscar</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.botao, { backgroundColor: "#cd3e1d" }]}
+          onPress={limpar}
         >
           <Text style={styles.botaoText}>Limpar</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.resultado}>
-        <Text style={styles.itemText}>CEP:23452342</Text>
-      </View>
+      {cepUser && (
+        <View style={styles.resultado}>
+          <Text style={styles.itemText}>
+            <Text style={[styles.itemText, { color: "#cd3e1d" }]}>CEP:</Text>{" "}
+            {cepUser.cep}
+          </Text>
+          <Text style={styles.itemText}>
+            <Text style={[styles.itemText, { color: "#cd3e1d" }]}>
+              Logradouro:
+            </Text>{" "}
+            {cepUser.logradouro}
+          </Text>
+          <Text style={styles.itemText}>
+            <Text style={[styles.itemText, { color: "#cd3e1d" }]}>Bairro:</Text>{" "}
+            {cepUser.bairro}
+          </Text>
+          2
+          <Text style={styles.itemText}>
+            <Text style={[styles.itemText, { color: "#cd3e1d" }]}>Cidade:</Text>{" "}
+            {cepUser.localidade}
+          </Text>
+          <Text style={styles.itemText}>
+            <Text style={[styles.itemText, { color: "#cd3e1d" }]}>Estado:</Text>{" "}
+            {cepUser.uf}
+          </Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -79,5 +132,14 @@ const styles = StyleSheet.create({
   botaoText: {
     fontSize: 22,
     color: "white",
+  },
+  resultado: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 100,
+  },
+  itemText: {
+    fontSize: 22,
+    textAlign: "center",
   },
 });
